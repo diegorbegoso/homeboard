@@ -1,26 +1,106 @@
 @import "tailwindcss";
+@source not "../../blueprints";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fffbeb;
+  --surface: #ffffff;
+  --foreground: #1c1917;
+  --muted: #f5f0e8;
+  --muted-foreground: #57534e;
+  --border: #ede4d8;
+  --primary: #c2410c;
+  --on-primary: #ffffff;
+  --primary-soft: #ffedd5;
+  --success: #047857;
+  --on-success: #ffffff;
+  --accent: #d97706;
+  --destructive: #dc2626;
+  --ring: #c2410c;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #1c1917;
+    --surface: #292524;
+    --foreground: #fafaf9;
+    --muted: #3a3431;
+    --muted-foreground: #d6d3d1;
+    --border: #44403c;
+    --primary: #fb923c;
+    --on-primary: #1c1917;
+    --primary-soft: #3a3431;
+    --success: #34d399;
+    --on-success: #052e16;
+    --destructive: #f87171;
+    --ring: #fb923c;
+    color-scheme: dark;
+  }
+}
+
+.dark {
+  --background: #1c1917;
+  --surface: #292524;
+  --foreground: #fafaf9;
+  --muted: #3a3431;
+  --muted-foreground: #d6d3d1;
+  --border: #44403c;
+  --primary: #fb923c;
+  --on-primary: #1c1917;
+  --primary-soft: #3a3431;
+  --success: #34d399;
+  --on-success: #052e16;
+  --destructive: #f87171;
+  --ring: #fb923c;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-success: var(--success);
+  --color-on-success: var(--on-success);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+  --font-heading: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  --radius-card: 20px;
+  --radius-input: 14px;
+  --shadow-sheet: 0 -8px 32px rgb(28 25 23 / 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: var(--background);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-top: env(safe-area-inset-top);
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 800;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
