@@ -1,0 +1,37 @@
+﻿# HomeBoard — ignore file. Lands in §10 Bootstrap BEFORE the first commit (deliberately replaces the scaffold's).
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# testing
+/coverage
+/playwright-report/
+/test-results/
+/blob-report/
+
+# env files — real values never committed; the template is
+.env*
+!.env.example
+
+# supabase local state
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+# vercel
+.vercel
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+pnpm-debug.log*

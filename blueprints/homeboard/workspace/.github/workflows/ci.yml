@@ -1,0 +1,30 @@
+{
+  "name": "CI",
+  "on": {
+    "push": { "branches": ["main"] },
+    "pull_request": {}
+  },
+  "jobs": {
+    "gate": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 40,
+      "env": { "CI": "true" },
+      "steps": [
+        { "uses": "actions/checkout@v4" },
+        { "uses": "pnpm/action-setup@v4" },
+        { "uses": "actions/setup-node@v4", "with": { "node-version-file": ".nvmrc", "cache": "pnpm" } },
+        { "name": "Install", "run": "pnpm install --frozen-lockfile" },
+        { "name": "Lint", "run": "pnpm exec biome ci ." },
+        { "name": "Typecheck", "run": "pnpm typecheck" },
+        { "name": "Unit tests", "run": "pnpm test" },
+        { "name": "Start local Supabase", "run": "pnpm db:start" },
+        { "name": "Write .env.local", "run": "pnpm env:local" },
+        { "name": "RLS tests", "run": "pnpm db:test" },
+        { "name": "Browsers", "run": "pnpm exec playwright install --with-deps chromium" },
+        { "name": "E2E", "run": "pnpm test:e2e" },
+        { "name": "Build", "run": "pnpm build" },
+        { "name": "Smoke", "run": "pnpm smoke" }
+      ]
+    }
+  }
+}

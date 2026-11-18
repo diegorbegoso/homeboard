@@ -1,0 +1,8 @@
+# pnpm 12 settings for a single-package project (no `packages:` list — this is not a monorepo).
+# allowBuilds is the pnpm 11+ key; the pnpm 10 key onlyBuiltDependencies is silently ignored.
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
+  supabase: true
+  "@sentry/cli": false
+  esbuild: true

@@ -1,0 +1,344 @@
+﻿[
+  {
+    "id": "E1-T1",
+    "title": "Scaffold and toolchain gates green",
+    "epic": "01-cimientos",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm lint` and `pnpm typecheck` run on the bootstrapped tree with the bundle present at `blueprints/homeboard/` THE SYSTEM SHALL exit 0 on both.",
+      "WHEN `pnpm test` runs THE SYSTEM SHALL execute `tests/unit/site.test.ts` and exit 0 with 0 failed and 0 skipped.",
+      "WHEN `pnpm smoke` runs after `pnpm build` THE SYSTEM SHALL start the production server on port 3101, receive HTTP 200 for `/` with a body containing `HomeBoard`, stop the server and exit 0.",
+      "WHEN `git check-ignore -q --no-index .env.example` runs THE SYSTEM SHALL exit 1 (not ignored), and WHEN `git check-ignore -q .env.local` runs THE SYSTEM SHALL exit 0 (ignored)."
+    ],
+    "verify": [
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test",
+      "pnpm build",
+      "pnpm smoke",
+      "status=0; git check-ignore -q --no-index .env.example || status=$?; test \"$status\" -eq 1",
+      "git check-ignore -q .env.local"
+    ],
+    "checkpoint": "step-01-scaffold",
+    "files": [".nvmrc", "src/app/page.tsx", "src/app/(app)/page.tsx", "src/lib/site.ts", "tests/unit/site.test.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T2",
+    "title": "Design tokens, fonts and app shell",
+    "epic": "01-cimientos",
+    "dependencies": ["E1-T1"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `tests/e2e/shell.spec.ts` loads `/` at a 375x812 viewport THE SYSTEM SHALL report `document.documentElement.scrollWidth` equal to `clientWidth` (no horizontal scroll).",
+      "WHEN the page is emulated with `prefers-color-scheme: dark` THE SYSTEM SHALL compute the `body` background as `rgb(28, 25, 23)`, and with `light` as `rgb(255, 251, 235)`.",
+      "WHEN `/` renders THE SYSTEM SHALL set `<html lang=\"es\">` and a computed `body` font-size of `16px`.",
+      "WHEN `/` renders THE SYSTEM SHALL show a `nav` named `Navegación principal` with links `Inicio`, `Compras` and `Ajustes`, each at least 44px tall, and `Inicio` carrying `aria-current=\"page\"`."
+    ],
+    "verify": [
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test:e2e tests/e2e/shell.spec.ts"
+    ],
+    "checkpoint": "step-02-shell",
+    "files": ["src/app/globals.css", "src/app/layout.tsx", "src/app/(app)/layout.tsx", "src/components/tab-bar.tsx", "tests/e2e/shell.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T3",
+    "title": "Installable PWA: manifest, icons, worker",
+    "epic": "01-cimientos",
+    "dependencies": ["E1-T2"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `GET /manifest.webmanifest` is requested THE SYSTEM SHALL return 200 JSON with `name` and `short_name` equal to `HomeBoard`, `display` equal to `standalone`, `start_url` equal to `/`, icons of sizes `192x192` and `512x512`, and one icon with `purpose` `maskable`.",
+      "WHEN `GET /sw.js` is requested THE SYSTEM SHALL return 200 with a JavaScript content type.",
+      "WHEN `GET /offline` is requested THE SYSTEM SHALL return 200 with a body containing `Sin conexión`.",
+      "WHEN `/icons/icon-192.png`, `/icons/icon-512.png`, `/icons/icon-maskable-512.png` and `/icons/apple-touch-icon.png` are requested THE SYSTEM SHALL return 200 with content type `image/png` for each.",
+      "WHEN `/` is loaded in the browser THE SYSTEM SHALL include a `link[rel=\"apple-touch-icon\"]` and a viewport meta whose content contains `viewport-fit=cover`."
+    ],
+    "verify": [
+      "pnpm icons",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test:e2e tests/e2e/pwa.spec.ts"
+    ],
+    "checkpoint": "step-03-pwa",
+    "files": ["public/icons/**", "src/app/manifest.ts", "public/sw.js", "src/app/offline/page.tsx", "tests/e2e/pwa.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T4",
+    "title": "Local Supabase, schema, RLS, seed and types",
+    "epic": "01-cimientos",
+    "dependencies": ["E1-T1"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm db:reset` runs against the local Supabase stack THE SYSTEM SHALL apply the `init_schema` migration and `supabase/seed.sql` and exit 0.",
+      "WHEN `pnpm db:types` runs THE SYSTEM SHALL write `src/lib/database.types.ts` containing the tables `profiles`, `households`, `household_members`, `shopping_items` and `push_subscriptions`.",
+      "WHEN `pnpm env:local` runs twice in a row THE SYSTEM SHALL exit 0 both times, failing instead with exit 1 if `supabase status` reports no API URL, anon/publishable key or service-role/secret key.",
+      "WHEN `pnpm typecheck` and `pnpm lint` run with the generated types and `src/lib/env.ts` THE SYSTEM SHALL exit 0."
+    ],
+    "verify": [
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm env:local",
+      "pnpm env:local",
+      "pnpm db:types",
+      "grep -q profiles src/lib/database.types.ts",
+      "grep -q households src/lib/database.types.ts",
+      "grep -q household_members src/lib/database.types.ts",
+      "grep -q shopping_items src/lib/database.types.ts",
+      "grep -q push_subscriptions src/lib/database.types.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "step-04-schema",
+    "files": ["supabase/config.toml", "supabase/migrations/**", "supabase/seed.sql", "src/lib/database.types.ts", "src/lib/env.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T5",
+    "title": "RLS isolation tests with pgTAP",
+    "epic": "01-cimientos",
+    "dependencies": ["E1-T4"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm db:test` runs `supabase/tests/rls_isolation.test.sql` as seed user Ana (household A) THE SYSTEM SHALL count 0 `shopping_items`, 0 `households` and 0 `household_members` rows of household B, and more than 0 items of her own household.",
+      "WHEN Ana inserts a `shopping_items` row with household B's `household_id` THE SYSTEM SHALL raise SQLSTATE `42501`.",
+      "WHEN Ana runs an UPDATE targeting household B's items THE SYSTEM SHALL change 0 rows.",
+      "WHEN `join_household('ZZZZZZZZ')` is called THE SYSTEM SHALL raise `codigo_invalido`, and WHEN Ana, already a member, calls `join_household` with household B's code THE SYSTEM SHALL raise `ya_tiene_hogar`.",
+      "WHEN the `anon` role selects from `shopping_items` THE SYSTEM SHALL return 0 rows, and WHEN Ana selects Bea's `profiles` row THE SYSTEM SHALL return 0 rows."
+    ],
+    "verify": [
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm db:test"
+    ],
+    "checkpoint": "step-05-rls-tests",
+    "files": ["supabase/tests/rls_isolation.test.sql"],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T6",
+    "title": "Email and password sign-up and sign-in",
+    "epic": "01-cimientos",
+    "dependencies": ["E1-T2", "E1-T4"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN a visitor submits `/registro` with Nombre, a new Correo and a Contraseña of at least 8 characters THE SYSTEM SHALL create the account, set a cookie whose name starts with `sb-`, and leave `/registro`.",
+      "WHEN seed user `ana@homeboard.test` submits `/entrar` with password `homeboard-dev-1234` THE SYSTEM SHALL set a `sb-` session cookie and leave `/entrar`.",
+      "WHEN `/entrar` is submitted with a wrong password THE SYSTEM SHALL stay on `/entrar`, set no `sb-` cookie and show `Correo o contraseña incorrectos` in an element with `role=\"alert\"`.",
+      "WHEN `/registro` is submitted with a Contraseña shorter than 8 characters THE SYSTEM SHALL stay on `/registro` and show `La contraseña necesita al menos 8 caracteres` in an element with `role=\"alert\"`."
+    ],
+    "verify": [
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test:e2e tests/e2e/auth.spec.ts"
+    ],
+    "checkpoint": "step-06-auth-email",
+    "files": ["src/lib/supabase/server.ts", "src/app/(auth)/entrar/page.tsx", "src/app/(auth)/registro/page.tsx", "src/app/(auth)/actions.ts", "tests/e2e/auth.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T7",
+    "title": "Google sign-in and OAuth callback route",
+    "epic": "01-cimientos",
+    "dependencies": ["E1-T6"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `GET /auth/callback?code=abc&next=/compras` reaches the handler and `exchangeCodeForSession` succeeds THE SYSTEM SHALL call it once with `abc` and respond 307 to `http://localhost:3000/compras`.",
+      "WHEN the callback is requested without `code`, or `exchangeCodeForSession` returns an error, THE SYSTEM SHALL respond 307 to `http://localhost:3000/entrar?error=oauth`.",
+      "WHEN `next` is `//evil.example`, `https://evil.example` or `/\\evil.example` THE SYSTEM SHALL redirect to `/` instead.",
+      "WHEN the request carries `x-forwarded-host: homeboard.vercel.app` and `NODE_ENV` is not `development` THE SYSTEM SHALL redirect to `https://homeboard.vercel.app` plus the safe `next` path."
+    ],
+    "verify": [
+      "pnpm test tests/unit/auth-callback.test.ts",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm build"
+    ],
+    "checkpoint": "step-07-auth-google",
+    "files": ["src/app/auth/callback/route.ts", "src/lib/auth/safe-next.ts", "src/app/(auth)/actions.ts", "src/app/(auth)/entrar/page.tsx", "tests/unit/auth-callback.test.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T1",
+    "title": "Households: create, join by code, settings",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E1-T3", "E1-T5", "E1-T6"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN an anonymous request hits `/`, `/compras` or `/ajustes` THE SYSTEM SHALL redirect to `/entrar`, while `/manifest.webmanifest`, `/sw.js`, `/offline` and `/icons/icon-192.png` still return 200 without a session.",
+      "WHEN a signed-in user without a household requests `/` THE SYSTEM SHALL redirect to `/bienvenida`.",
+      "WHEN that user submits `Crear hogar` with `Nombre del hogar` filled THE SYSTEM SHALL create the household with them as `owner`, land on `/`, and show an 8-character invite code in `[data-testid=\"codigo-invitacion\"]` on `/ajustes`.",
+      "WHEN a second new user submits that code in `Código de invitación` on `/bienvenida` THE SYSTEM SHALL land on `/`, and `/ajustes` SHALL list both members' names.",
+      "WHEN `Unirme` is submitted with `ZZZZZZZZ` THE SYSTEM SHALL stay on `/bienvenida` and show `Ese código no existe` in an element with `role=\"alert\"`.",
+      "WHEN `Cerrar sesión` is pressed on `/ajustes` THE SYSTEM SHALL clear the `sb-` session cookie and land on `/entrar`."
+    ],
+    "verify": [
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test:e2e tests/e2e/household.spec.ts tests/e2e/shell.spec.ts tests/e2e/pwa.spec.ts tests/e2e/auth.spec.ts"
+    ],
+    "checkpoint": "step-08-household",
+    "files": ["src/proxy.ts", "src/app/bienvenida/page.tsx", "src/app/(app)/ajustes/page.tsx", "tests/e2e/household.spec.ts", "tests/e2e/shell.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T2",
+    "title": "Micro-app registry and Inicio tiles",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E2-T1"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `tests/unit/registry.test.ts` runs THE SYSTEM SHALL assert every registry entry has a unique `id`, a `ruta` starting with `/`, a non-empty `nombre` and `descripcion`, and an `icono` from the allowed icon names.",
+      "WHEN `tests/unit/registry.test.ts` runs THE SYSTEM SHALL assert that the only enabled entry is `lista-compras` and that it points to `/compras`.",
+      "WHEN seed user `ana@homeboard.test` opens `/` THE SYSTEM SHALL show the heading `Hola, Ana`, the household name `Casa de Ana`, and a `Lista de compras` tile linking to `/compras`.",
+      "WHEN `/` renders at 375px wide THE SYSTEM SHALL keep every tile link at least 44px tall."
+    ],
+    "verify": [
+      "pnpm test tests/unit/registry.test.ts",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm test:e2e tests/e2e/home.spec.ts"
+    ],
+    "checkpoint": "step-09-home",
+    "files": ["src/micro-apps/registry.ts", "src/app/(app)/page.tsx", "src/components/micro-app-tile.tsx", "tests/unit/registry.test.ts", "tests/e2e/home.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T3",
+    "title": "Shopping list CRUD with optimistic UI and undo",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E2-T2"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN a household member adds `Leche` with quantity `2 L` on `/compras` THE SYSTEM SHALL show it in the pending list, and it SHALL still be there after a page reload.",
+      "WHEN the member edits that item's name to `Leche de avena` THE SYSTEM SHALL show the new name after a reload.",
+      "WHEN the member marks it as bought THE SYSTEM SHALL show it under `Comprado` with its checkbox checked, still checked after a reload, and unchecking SHALL return it to the pending list.",
+      "WHEN the member deletes it THE SYSTEM SHALL remove it and show a toast with a `Deshacer` button; pressing `Deshacer` SHALL restore it, and after a second delete and a reload it SHALL stay gone.",
+      "WHEN an empty name is submitted THE SYSTEM SHALL create no item and show `Escribe qué hay que comprar` in an element with `role=\"alert\"`.",
+      "WHEN the household has no items THE SYSTEM SHALL show the empty state `Nada por comprar. ¡Qué paz!`."
+    ],
+    "verify": [
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test:e2e tests/e2e/compras.spec.ts"
+    ],
+    "checkpoint": "step-10-shopping",
+    "files": ["src/app/(app)/compras/page.tsx", "src/app/(app)/compras/actions.ts", "src/app/(app)/compras/shopping-list.tsx", "src/lib/shopping/schema.ts", "tests/e2e/compras.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T4",
+    "title": "Realtime sync of the shopping list",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E2-T3"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN member A adds `Tomates` while member B of the same household has `/compras` open in a separate browser context THE SYSTEM SHALL show `Tomates` in B's list within 5000 ms without a reload.",
+      "WHEN A marks `Tomates` as bought THE SYSTEM SHALL show it checked in B's list within 5000 ms without a reload.",
+      "WHEN A deletes `Tomates` THE SYSTEM SHALL remove it from B's list within 5000 ms without a reload.",
+      "WHEN a user of a different household has `/compras` open while A adds an item THE SYSTEM SHALL not show that item in that user's list after 5000 ms."
+    ],
+    "verify": [
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm build",
+      "pnpm test:e2e tests/e2e/realtime.spec.ts tests/e2e/compras.spec.ts"
+    ],
+    "checkpoint": "step-11-realtime",
+    "files": ["src/lib/supabase/client.ts", "src/app/(app)/compras/use-realtime-items.ts", "src/app/(app)/compras/shopping-list.tsx", "src/app/global-error.tsx", "tests/e2e/realtime.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T5",
+    "title": "Push sender, logger and item triggers",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E2-T3"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `sendPushToHousehold` runs for a household with one subscription of the actor and two of other members, with `web-push` mocked, THE SYSTEM SHALL call `sendNotification` exactly twice, never for the actor, with a JSON payload carrying `title`, `body`, `url` and `tag`.",
+      "WHEN the mocked `sendNotification` rejects with a `WebPushError` of status 410 or 404 THE SYSTEM SHALL delete that subscription row and report it in `removed`.",
+      "WHEN any of `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` or `VAPID_SUBJECT` is unset THE SYSTEM SHALL return `{ sent: 0, removed: 0 }` without calling `sendNotification` and without throwing.",
+      "WHEN `buildItemPush` runs for actor `Ana` and item `Leche` THE SYSTEM SHALL return the body `Ana añadió Leche` for `added` and `Ana compró Leche` for `done`, both with `url` `/compras`.",
+      "WHEN `tests/e2e/compras.spec.ts` runs with VAPID keys present and no subscriptions stored THE SYSTEM SHALL pass every assertion."
+    ],
+    "verify": [
+      "pnpm test tests/unit/push-send.test.ts",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm test:e2e tests/e2e/compras.spec.ts"
+    ],
+    "checkpoint": "step-12-push-server",
+    "files": ["src/lib/supabase/admin.ts", "src/lib/log.ts", "src/lib/push/send.ts", "src/app/(app)/compras/actions.ts", "tests/unit/push-send.test.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T6",
+    "title": "Enable-notifications button and subscription save",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E2-T1", "E2-T5"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `pushSupportState` receives an iPhone user agent with `isStandalone` false THE SYSTEM SHALL return `instalar`.",
+      "WHEN `pushSupportState` receives an iPhone user agent with `isStandalone` true and `hasPushManager` true THE SYSTEM SHALL return `disponible`.",
+      "WHEN `pushSupportState` receives a non-iOS user agent THE SYSTEM SHALL return `disponible` if `hasPushManager` is true and `no-soportado` if it is false.",
+      "WHEN `subscriptionSchema` parses a payload missing `keys.p256dh` or with a non-https `endpoint` THE SYSTEM SHALL reject it, and SHALL accept a payload with an https `endpoint` and both keys.",
+      "WHEN a unit test calls `saveSubscription` with a malformed payload (mocking `@/lib/supabase/server`) THE SYSTEM SHALL return `{ ok: false, error: \"suscripcion_invalida\" }`, and WHEN called with a valid payload THE SYSTEM SHALL upsert with `onConflict: \"endpoint\"` and return `{ ok: true, data: null }`."
+    ],
+    "verify": [
+      "pnpm test tests/unit/push-support.test.ts",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm db:start",
+      "pnpm db:reset",
+      "pnpm test:e2e tests/e2e/household.spec.ts"
+    ],
+    "checkpoint": "step-13-push-client",
+    "files": ["src/lib/push/actions.ts", "src/lib/push/support.ts", "src/components/push-toggle.tsx", "src/app/(app)/ajustes/page.tsx", "tests/unit/push-support.test.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T7",
+    "title": "Sentry, health keep-alive and deploy config",
+    "epic": "02-hogar-y-compras",
+    "dependencies": ["E2-T5"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `GET /api/health` is called without an `Authorization` header or with a wrong bearer THE SYSTEM SHALL return 401 `{ \"ok\": false, \"error\": \"unauthorized\" }`, and with `Authorization: Bearer <CRON_SECRET>` and a working database THE SYSTEM SHALL return 200 `{ \"ok\": true }`.",
+      "WHEN the health check's database query errors THE SYSTEM SHALL return 503 `{ \"ok\": false, \"error\": \"db\" }`.",
+      "WHEN `tests/unit/deploy.test.ts` reads `vercel.json` THE SYSTEM SHALL find exactly one cron with `path` `/api/health` and a daily `schedule`, and `src/app/api/health/route.ts` SHALL export `GET`.",
+      "WHEN `tests/unit/deploy.test.ts` parses `.github/workflows/ci.yml` THE SYSTEM SHALL find, in this order, steps running `pnpm install --frozen-lockfile`, `pnpm exec biome ci .`, `pnpm typecheck`, `pnpm test`, `pnpm db:test`, `pnpm test:e2e` and `pnpm build`, and every `pnpm <script>` it runs SHALL exist in `package.json`.",
+      "WHEN `register()` from `src/instrumentation.ts` runs with `NEXT_PUBLIC_SENTRY_DSN` unset THE SYSTEM SHALL not call `Sentry.init`, and with it set THE SYSTEM SHALL call it exactly once.",
+      "WHEN `log.error` is called with `{ email, token, code }` THE SYSTEM SHALL write one JSON line with `level` `error`, the event name, `code` unchanged and `email` and `token` as `[redacted]`.",
+      "WHEN `GET /api/health` is called without `Authorization` through the running server THE SYSTEM SHALL return 401 `{ ok: false, error: \"unauthorized\" }`; WHEN called with `Authorization: Bearer ${CRON_SECRET}` THE SYSTEM SHALL return 200 `{ ok: true }`."
+    ],
+    "verify": [
+      "pnpm test tests/unit/deploy.test.ts",
+      "pnpm test",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm build",
+      "pnpm smoke",
+      "pnpm test:e2e tests/e2e/health.spec.ts"
+    ],
+    "checkpoint": "step-14-deploy",
+    "files": ["src/instrumentation.ts", "src/instrumentation-client.ts", "src/app/api/health/route.ts", "tests/unit/deploy.test.ts", "tests/e2e/health.spec.ts"],
+    "status": "pending"
+  }
+]
