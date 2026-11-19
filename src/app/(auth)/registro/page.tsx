@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DesktopQr } from "@/components/desktop-qr";
 import { signUp } from "../actions";
 
 export const metadata: Metadata = { title: "Crea tu cuenta" };
@@ -69,6 +70,7 @@ export default async function RegistroPage({ searchParams }: { searchParams: Pro
           Ya tengo cuenta
         </Link>
       </p>
+      <DesktopQr />
     </section>
   );
 }

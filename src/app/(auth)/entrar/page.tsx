@@ -1,6 +1,7 @@
 import { GoogleLogo } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DesktopQr } from "@/components/desktop-qr";
 import { signIn, signInWithGoogle } from "../actions";
 
 export const metadata: Metadata = { title: "Entra a HomeBoard" };
@@ -71,6 +72,7 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
           Crear cuenta nueva
         </Link>
       </p>
+      <DesktopQr />
     </section>
   );
 }
