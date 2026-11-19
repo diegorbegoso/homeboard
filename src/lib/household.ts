@@ -1,3 +1,4 @@
+import { log } from "@/lib/log";
 import type { createClient } from "@/lib/supabase/server";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
@@ -14,11 +15,12 @@ export type HouseholdSummary = { id: string; name: string; inviteCode: string; r
 
 /** Every household the user belongs to, oldest membership first. RLS already limits rows to the user's own. */
 export async function listHouseholds(supabase: Client, userId: string): Promise<HouseholdSummary[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("household_members")
     .select("household_id, role, households(name, invite_code)")
     .eq("user_id", userId)
     .order("joined_at", { ascending: true });
+  if (error) log.error("households_read_failed", { code: error.code, message: error.message });
   return (data ?? []).flatMap((row) => {
     const household = row.households as { name: string; invite_code: string } | null;
     if (!household) return [];
