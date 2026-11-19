@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { SEED_USERS, signIn } from "./helpers";
 
 test.use({ viewport: { width: 375, height: 812 } });
+
+test.beforeEach(async ({ page }) => {
+  await signIn(page, SEED_USERS.ana);
+});
 
 test("no horizontal scroll at 375px", async ({ page }) => {
   await page.goto("/");
