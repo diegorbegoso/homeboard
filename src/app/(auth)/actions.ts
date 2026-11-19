@@ -65,7 +65,7 @@ export async function signUp(formData: FormData) {
   }
   // With "Confirm email" on, there is no session until the user opens the link we emailed them.
   if (!data.session) {
-    redirect("/entrar?error=confirma_tu_correo");
+    redirect("/entrar?aviso=confirma_tu_correo");
   }
   redirect("/");
 }
@@ -76,12 +76,29 @@ export async function signOut() {
   redirect("/entrar");
 }
 
+export async function deleteAccount() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/entrar");
+  const { error } = await supabase.rpc("delete_account");
+  if (error) redirect("/ajustes?error=eliminar_cuenta");
+  // The user no longer exists server-side: only clear the local cookies.
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/entrar?aviso=cuenta_eliminada");
+}
+
 export async function signInWithGoogle() {
   const origin = (await headers()).get("origin") ?? getPublicEnv().NEXT_PUBLIC_SITE_URL;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${origin}/auth/callback` },
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+      // Always show Google's account chooser instead of silently reusing the browser's signed-in account.
+      queryParams: { prompt: "select_account" },
+    },
   });
   if (error || !data.url) {
     redirect("/entrar?error=oauth");

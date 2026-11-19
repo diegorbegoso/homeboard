@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(18);
 
 -- A user with no household, created inside this transaction (rolled back at the end).
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data)
@@ -49,6 +49,11 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-4444-444444444444","role":"authenticated"}', true);
 select throws_ok($$ select public.join_household('ZZZZZZZZ') $$,
   'P0001', 'codigo_invalido', 'un código inexistente se rechaza');
+select lives_ok($$ select public.delete_account() $$, 'Zoe puede eliminar su cuenta');
+reset role;
+select is((select count(*)::int from auth.users where id = '44444444-4444-4444-4444-444444444444'),
+  0, 'el usuario eliminado ya no existe');
+set local role authenticated;
 
 -- ---------- as the owner of the database (bypasses RLS): Ana's UPDATE changed nothing
 reset role;

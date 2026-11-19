@@ -10,18 +10,31 @@ export const metadata: Metadata = { title: "Entra a HomeBoard" };
 const ERROR_COPY: Record<string, string> = {
   credenciales_invalidas: "Correo o contraseña incorrectos",
   correo_sin_confirmar: "Confirma tu correo: te enviamos un enlace. Revisa también el spam.",
-  confirma_tu_correo: "Cuenta creada. Te enviamos un enlace para confirmar tu correo; ábrelo y luego entra.",
   oauth: "No pudimos entrar con Google. Prueba con tu correo.",
 };
 
-export default async function EntrarPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
+const NOTICE_COPY: Record<string, string> = {
+  confirma_tu_correo: "Cuenta creada. Te enviamos un enlace para confirmar tu correo; ábrelo y luego entra.",
+  cuenta_eliminada: "Tu cuenta se eliminó. ¡Hasta pronto!",
+};
+
+export default async function EntrarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; aviso?: string }>;
+}) {
+  const { error, aviso } = await searchParams;
   return (
     <section className="mx-auto flex min-h-svh max-w-sm flex-col justify-center gap-6 px-4 py-10">
       <h1 className="text-center">Entra a HomeBoard</h1>
       {error && ERROR_COPY[error] && (
         <p role="alert" className="rounded-input bg-muted px-4 py-3 text-sm text-destructive">
           {ERROR_COPY[error]}
+        </p>
+      )}
+      {aviso && NOTICE_COPY[aviso] && (
+        <p role="status" className="rounded-input bg-primary-soft px-4 py-3 text-sm text-foreground">
+          {NOTICE_COPY[aviso]}
         </p>
       )}
       <form action={signInWithGoogle}>

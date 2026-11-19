@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { signOut } from "@/app/(auth)/actions";
+import { deleteAccount, signOut } from "@/app/(auth)/actions";
 import { PushToggle } from "@/components/push-toggle";
 import { SubmitButton } from "@/components/submit-button";
 import { getActiveHousehold } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
+import { DeleteAccount } from "./delete-account";
 
 export const metadata: Metadata = { title: "Ajustes — HomeBoard" };
 
-export default async function AjustesPage() {
+export default async function AjustesPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,6 +35,11 @@ export default async function AjustesPage() {
   return (
     <main className="mx-auto flex max-w-sm flex-col gap-6 px-4 py-8">
       <h1>Ajustes</h1>
+      {error === "eliminar_cuenta" && (
+        <p role="alert" className="rounded-input bg-muted px-4 py-3 text-sm text-destructive">
+          No pudimos eliminar tu cuenta. Intenta de nuevo.
+        </p>
+      )}
 
       {active && (
         <div className="rounded-card border border-border bg-surface p-6">
@@ -81,6 +88,7 @@ export default async function AjustesPage() {
             Cerrar sesión
           </SubmitButton>
         </form>
+        <DeleteAccount remove={deleteAccount} />
       </div>
     </main>
   );

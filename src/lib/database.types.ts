@@ -126,6 +126,9 @@ isOneToOne: false
             "create_household":
 { Args: { "p_name": string }; Returns: string
                            },
+"delete_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "generate_invite_code":
 { Args: Record<PropertyKey, never>; Returns: string
                            },

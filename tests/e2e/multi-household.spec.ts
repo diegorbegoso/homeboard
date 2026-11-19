@@ -77,3 +77,24 @@ test("leaving a household asks first; leaving the last one returns to onboarding
   await page.getByRole("button", { name: "Salir del hogar", exact: true }).click();
   await expect(page).toHaveURL(/\/bienvenida/);
 });
+
+test("deleting the account asks first, signs out and the credentials stop working", async ({ page }) => {
+  const email = uniqueEmail("borra");
+  await registerUser(page, "Borra", email);
+  await createHousehold(page, "Casa Efimera");
+
+  await page.goto("/ajustes");
+  await page.getByRole("button", { name: "Eliminar mi cuenta", exact: true }).click();
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(page).toHaveURL(/\/ajustes/);
+
+  await page.getByRole("button", { name: "Eliminar mi cuenta", exact: true }).click();
+  await page.getByRole("button", { name: "Eliminar cuenta", exact: true }).click();
+  await expect(page).toHaveURL(/\/entrar/);
+  await expect(page.getByText("Tu cuenta se eliminó", { exact: false })).toBeVisible();
+
+  await page.getByLabel("Correo", { exact: true }).fill(email);
+  await page.getByLabel("Contraseña", { exact: true }).fill("homeboard-dev-1234");
+  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  await expect(page.getByText("Correo o contraseña incorrectos")).toBeVisible();
+});
