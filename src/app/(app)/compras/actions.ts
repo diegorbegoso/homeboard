@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addItemSchema, itemIdSchema, toggleItemSchema, updateItemSchema } from "@/lib/shopping/schema";
 import type { ShoppingItem } from "@/lib/shopping/schema";
+import { addItemSchema, itemIdSchema, toggleItemSchema, updateItemSchema } from "@/lib/shopping/schema";
 import { createClient } from "@/lib/supabase/server";
 
 type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
