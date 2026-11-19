@@ -49,3 +49,31 @@ test("joining a second household by code works for a user who already has one", 
   await expect(other.getByTestId("hogar-activo")).toHaveText("Hogar A");
   await other.context().close();
 });
+
+test("leaving a household asks first; leaving the last one returns to onboarding", async ({ page }) => {
+  await registerUser(page, "Sale", uniqueEmail("sale"));
+  await createHousehold(page, "Casa Fija");
+  await page.goto("/hogares");
+  await page.getByLabel("Nombre del hogar", { exact: true }).fill("Casa Pasajera");
+  await page.getByRole("button", { name: "Crear hogar", exact: true }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+
+  await page.goto("/hogares");
+  await expect(page.getByTestId("hogar")).toHaveCount(2);
+
+  // Cancel keeps the household.
+  await page.getByRole("button", { name: "Salir de Casa Pasajera", exact: true }).click();
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(page.getByTestId("hogar")).toHaveCount(2);
+
+  // Confirm removes it; the other one stays and becomes active.
+  await page.getByRole("button", { name: "Salir de Casa Pasajera", exact: true }).click();
+  await page.getByRole("button", { name: "Salir del hogar", exact: true }).click();
+  await expect(page.getByTestId("hogar")).toHaveCount(1);
+  await expect(page.getByText("Activo", { exact: true })).toBeVisible();
+
+  // Leaving the last household sends the user back to onboarding.
+  await page.getByRole("button", { name: "Salir de Casa Fija", exact: true }).click();
+  await page.getByRole("button", { name: "Salir del hogar", exact: true }).click();
+  await expect(page).toHaveURL(/\/bienvenida/);
+});

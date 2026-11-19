@@ -6,6 +6,7 @@ export const HOUSEHOLD_ERROR_COPY: Record<string, string> = {
   codigo_invalido: "Ese código no existe",
   hogar_lleno: "Este hogar está lleno",
   nombre_invalido: "El nombre del hogar no es válido",
+  no_es_miembro: "Ya no perteneces a ese hogar",
   error_inesperado: "Ocurrió un error inesperado. Intenta de nuevo.",
 };
 

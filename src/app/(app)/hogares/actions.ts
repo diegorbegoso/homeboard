@@ -46,6 +46,18 @@ export async function unirseAHogar(formData: FormData): Promise<void> {
   redirect("/");
 }
 
+export async function salirDeHogar(formData: FormData): Promise<void> {
+  const parsed = z.uuid().safeParse(field(formData, "hogar"));
+  if (!parsed.success) redirect("/hogares?error=error_inesperado");
+  const { supabase, user } = await requireUser();
+  const { error } = await supabase.rpc("leave_household", { p_household_id: parsed.data });
+  if (error) fail("/hogares", error.message);
+  revalidatePath("/", "layout");
+  // Redirects from a Server Action skip proxy.ts, so pick the destination here.
+  const remaining = await listHouseholds(supabase, user.id);
+  redirect(remaining.length > 0 ? "/hogares" : "/bienvenida");
+}
+
 export async function cambiarHogar(formData: FormData): Promise<void> {
   const parsed = z.uuid().safeParse(field(formData, "hogar"));
   if (!parsed.success) redirect("/hogares?error=error_inesperado");

@@ -138,6 +138,9 @@ isOneToOne: false
 "join_household":
 { Args: { "p_code": string }; Returns: string
                            },
+"leave_household":
+{ Args: { "p_household_id": string }; Returns: undefined
+                           },
 "shares_household":
 { Args: { "other": string }; Returns: boolean
                            }

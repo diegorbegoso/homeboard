@@ -1,5 +1,6 @@
 import { CaretRight } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { MicroAppTile } from "@/components/micro-app-tile";
 import { getActiveHousehold } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +17,7 @@ export default async function HomePage() {
     : { data: null };
 
   const { active, all } = user ? await getActiveHousehold(supabase, user.id) : { active: null, all: [] };
+  if (user && !active) redirect("/bienvenida");
   const apps = enabledMicroApps();
 
   return (
