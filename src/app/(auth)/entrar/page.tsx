@@ -1,6 +1,7 @@
+import { GoogleLogo } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { signIn } from "../actions";
+import { signIn, signInWithGoogle } from "../actions";
 
 export const metadata: Metadata = { title: "Entra a HomeBoard" };
 
@@ -19,6 +20,20 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
           {ERROR_COPY[error]}
         </p>
       )}
+      <form action={signInWithGoogle}>
+        <button
+          type="submit"
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-border bg-surface py-3 text-sm font-medium"
+        >
+          <GoogleLogo size={20} aria-hidden="true" />
+          Continuar con Google
+        </button>
+      </form>
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">o con tu correo</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
       <form action={signIn} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="correo" className="text-sm font-medium">

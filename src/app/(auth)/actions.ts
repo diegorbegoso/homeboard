@@ -1,7 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getPublicEnv } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 const signInSchema = z.object({
@@ -66,4 +68,17 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/entrar");
+}
+
+export async function signInWithGoogle() {
+  const origin = (await headers()).get("origin") ?? getPublicEnv().NEXT_PUBLIC_SITE_URL;
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/callback` },
+  });
+  if (error || !data.url) {
+    redirect("/entrar?error=oauth");
+  }
+  redirect(data.url);
 }
