@@ -31,7 +31,9 @@ export async function signIn(formData: FormData) {
     password: parsed.data.contrasena,
   });
   if (error) {
-    redirect("/entrar?error=credenciales_invalidas");
+    redirect(
+      `/entrar?error=${error.code === "email_not_confirmed" ? "correo_sin_confirmar" : "credenciales_invalidas"}`,
+    );
   }
   redirect("/");
 }
@@ -50,7 +52,7 @@ export async function signUp(formData: FormData) {
     redirect("/registro?error=contrasena_corta");
   }
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: correo,
     password: contrasena,
     options: { data: { full_name: nombre } },
@@ -60,6 +62,10 @@ export async function signUp(formData: FormData) {
       redirect("/registro?error=correo_en_uso");
     }
     redirect("/registro?error=datos_invalidos");
+  }
+  // With "Confirm email" on, there is no session until the user opens the link we emailed them.
+  if (!data.session) {
+    redirect("/entrar?error=confirma_tu_correo");
   }
   redirect("/");
 }

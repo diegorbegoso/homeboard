@@ -9,6 +9,8 @@ export const metadata: Metadata = { title: "Entra a HomeBoard" };
 
 const ERROR_COPY: Record<string, string> = {
   credenciales_invalidas: "Correo o contraseña incorrectos",
+  correo_sin_confirmar: "Confirma tu correo: te enviamos un enlace. Revisa también el spam.",
+  confirma_tu_correo: "Cuenta creada. Te enviamos un enlace para confirmar tu correo; ábrelo y luego entra.",
   oauth: "No pudimos entrar con Google. Prueba con tu correo.",
 };
 
