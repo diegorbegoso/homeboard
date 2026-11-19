@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { signOut } from "@/app/(auth)/actions";
+import { PushToggle } from "@/components/push-toggle";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Ajustes — HomeBoard" };
@@ -64,6 +65,11 @@ export default async function AjustesPage() {
           </ul>
         </div>
       )}
+
+      <div className="rounded-card border border-border bg-surface p-6">
+        <h2 className="mb-4 text-lg font-heading font-extrabold">Notificaciones</h2>
+        <PushToggle />
+      </div>
 
       <div className="rounded-card border border-border bg-surface p-6">
         <form action={signOut}>
