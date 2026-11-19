@@ -138,4 +138,4 @@ Next loads `.env.local` itself; Playwright loads it in `playwright.config.ts`; u
 4. Never commit secrets, `.env.local`, or `supabase/.env`.
 5. Never edit generated files by hand: `src/lib/database.types.ts`, an applied migration, `public/icons/*.png` (re-run `pnpm icons`).
 6. Never mark a task done with a failing gate, and never edit a `verify` command to make it pass.
-7. Nothing from the Non-Goals list (payments, landing page, multiple households per user, native app, offline writes, other micro apps, i18n).
+7. Nothing from the Non-Goals list (payments, landing page, native app, offline writes, other micro apps, i18n).

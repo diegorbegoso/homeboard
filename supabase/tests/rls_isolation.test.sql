@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 -- A user with no household, created inside this transaction (rolled back at the end).
 insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data)
@@ -28,8 +28,10 @@ select lives_ok(
   'el UPDATE de Ana sobre el hogar B se ejecuta sin error');
 select is((select count(*)::int from public.profiles where id = '33333333-3333-3333-3333-333333333333'),
   0, 'Ana no ve el perfil de Bea');
-select throws_ok($$ select public.join_household('BEAHGR78') $$,
-  'P0001', 'ya_tiene_hogar', 'Ana ya tiene hogar y no puede unirse a otro');
+select lives_ok($$ select public.create_household('Segunda casa') $$,
+  'Ana puede crear un segundo hogar');
+select is((select count(*)::int from public.household_members where user_id = '11111111-1111-1111-1111-111111111111'),
+  2, 'Ana pertenece a dos hogares');
 
 -- ---------- as Zoe (no household)
 reset role;

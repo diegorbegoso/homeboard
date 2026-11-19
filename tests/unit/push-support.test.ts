@@ -16,7 +16,14 @@ vi.mock("@/lib/supabase/server", () => ({
       table === "household_members"
         ? {
             select: () => ({
-              eq: () => ({ maybeSingle: async () => ({ data: { household_id: "hid-1" } }) }),
+              eq: () => ({
+                order: async () => ({
+                  data: [
+                    { household_id: "hid-1", role: "owner", households: { name: "Casa 1", invite_code: "AAAAAAAA" } },
+                    { household_id: "hid-2", role: "member", households: { name: "Casa 2", invite_code: "BBBBBBBB" } },
+                  ],
+                }),
+              }),
             }),
           }
         : { upsert: mockUpsert },
@@ -67,15 +74,19 @@ describe("saveSubscription", () => {
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
-  it("upserts on endpoint for a valid payload", async () => {
+  it("upserts one row per household the user belongs to", async () => {
     mockUpsert.mockResolvedValue({ error: null });
     const result = await saveSubscription({
       endpoint: "https://fcm.googleapis.com/fcm/send/abc",
       keys: { p256dh: "d", auth: "a" },
     });
-    expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({ user_id: "user-1", household_id: "hid-1" }), {
-      onConflict: "endpoint",
-    });
+    expect(mockUpsert).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ user_id: "user-1", household_id: "hid-1" }),
+        expect.objectContaining({ user_id: "user-1", household_id: "hid-2" }),
+      ],
+      { onConflict: "endpoint,household_id" },
+    );
     expect(result).toEqual({ ok: true, data: null });
   });
 });

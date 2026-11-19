@@ -3,6 +3,7 @@
 import { GearSix, House, ShoppingCart } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SignOutTab } from "@/components/sign-out-dialog";
 
 const TABS = [
   { href: "/", label: "Inicio", Icon: House },
@@ -10,7 +11,7 @@ const TABS = [
   { href: "/ajustes", label: "Ajustes", Icon: GearSix },
 ] as const;
 
-export function TabBar() {
+export function TabBar({ signOut }: Readonly<{ signOut: () => Promise<void> }>) {
   const pathname = usePathname();
   return (
     <nav
@@ -33,6 +34,9 @@ export function TabBar() {
             </li>
           );
         })}
+        <li className="flex-1">
+          <SignOutTab signOut={signOut} />
+        </li>
       </ul>
     </nav>
   );

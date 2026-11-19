@@ -63,11 +63,13 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  const { data: membership } = await supabase
+  // A user may belong to several households: only whether there is at least one matters here.
+  const { data: memberships } = await supabase
     .from("household_members")
     .select("household_id")
     .eq("user_id", userId)
-    .maybeSingle();
+    .limit(1);
+  const membership = memberships?.[0];
 
   if (!membership && path !== ONBOARDING) {
     return redirectTo(ONBOARDING);

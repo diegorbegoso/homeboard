@@ -59,17 +59,23 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"display_name": string,"id": string
+                    "active_household_id": string | null,"avatar_url": string | null,"created_at": string,"display_name": string,"id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name": string,"id": string
+                    "active_household_id"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"display_name": string,"id": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"id"?: string
+                    "active_household_id"?: string | null,"avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"id"?: string
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "profiles_active_household_id_fkey"
+      columns: ["active_household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"push_subscriptions": {
                   Row: {

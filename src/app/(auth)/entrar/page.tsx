@@ -2,6 +2,7 @@ import { GoogleLogo } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DesktopQr } from "@/components/desktop-qr";
+import { SubmitButton } from "@/components/submit-button";
 import { signIn, signInWithGoogle } from "../actions";
 
 export const metadata: Metadata = { title: "Entra a HomeBoard" };
@@ -22,13 +23,13 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
         </p>
       )}
       <form action={signInWithGoogle}>
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-border bg-surface py-3 text-sm font-medium"
+        <SubmitButton
+          pendingLabel="Conectando con Google…"
+          className="w-full rounded-full border border-border bg-surface py-3 text-sm font-medium"
         >
           <GoogleLogo size={20} aria-hidden="true" />
           Continuar con Google
-        </button>
+        </SubmitButton>
       </form>
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-border" />
@@ -62,9 +63,12 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
             className="rounded-input border border-border bg-muted px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
         </div>
-        <button type="submit" className="rounded-full bg-primary py-3 text-sm font-medium text-on-primary">
+        <SubmitButton
+          pendingLabel="Entrando…"
+          className="rounded-full bg-primary py-3 text-sm font-medium text-on-primary"
+        >
           Entrar
-        </button>
+        </SubmitButton>
       </form>
       <p className="text-center text-sm text-muted-foreground">
         ¿Sin cuenta?{" "}

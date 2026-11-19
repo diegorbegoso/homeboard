@@ -47,3 +47,18 @@ test("bottom tab bar", async ({ page }) => {
   }
   await expect(nav.getByRole("link", { name: "Inicio", exact: true })).toHaveAttribute("aria-current", "page");
 });
+
+test("sign out from the bottom bar asks for confirmation", async ({ page }) => {
+  await page.goto("/");
+  const nav = page.getByRole("navigation", { name: "Navegación principal" });
+  const salir = nav.getByRole("button", { name: "Salir", exact: true });
+  expect((await salir.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+  await salir.click();
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await expect(page).not.toHaveURL(/\/entrar/);
+
+  await salir.click();
+  await page.getByRole("button", { name: "Cerrar sesión", exact: true }).click();
+  await expect(page).toHaveURL(/\/entrar/);
+});

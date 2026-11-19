@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { PushToggle } from "@/components/push-toggle";
+import { SubmitButton } from "@/components/submit-button";
+import { getActiveHousehold } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Ajustes — HomeBoard" };
@@ -13,14 +16,10 @@ export default async function AjustesPage() {
 
   if (!user) return null;
 
-  const { data: membership } = await supabase
-    .from("household_members")
-    .select("household_id, user_id, households(name, invite_code)")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const { active } = await getActiveHousehold(supabase, user.id);
 
-  const { data: memberRows } = membership
-    ? await supabase.from("household_members").select("user_id").eq("household_id", membership.household_id)
+  const { data: memberRows } = active
+    ? await supabase.from("household_members").select("user_id").eq("household_id", active.id)
     : { data: null };
 
   const memberIds = memberRows?.map((m) => m.user_id) ?? [];
@@ -30,22 +29,24 @@ export default async function AjustesPage() {
       : { data: null };
 
   const profileMap = Object.fromEntries(profileRows?.map((p) => [p.id, p.display_name]) ?? []);
-  const household = membership?.households as { name: string; invite_code: string } | null;
 
   return (
     <main className="mx-auto flex max-w-sm flex-col gap-6 px-4 py-8">
       <h1>Ajustes</h1>
 
-      {household && (
+      {active && (
         <div className="rounded-card border border-border bg-surface p-6">
           <h2 className="mb-4 text-lg font-heading font-extrabold">Tu hogar</h2>
-          <p className="mb-2 font-medium">{household.name}</p>
+          <p className="mb-2 font-medium">{active.name}</p>
           <p
             data-testid="codigo-invitacion"
             className="font-heading text-2xl font-extrabold tracking-widest text-primary"
           >
-            {household.invite_code}
+            {active.inviteCode}
           </p>
+          <Link href="/hogares" className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+            Mis hogares
+          </Link>
         </div>
       )}
 
@@ -73,12 +74,12 @@ export default async function AjustesPage() {
 
       <div className="rounded-card border border-border bg-surface p-6">
         <form action={signOut}>
-          <button
-            type="submit"
-            className="min-h-11 w-full rounded-full border border-destructive py-3 text-sm font-medium text-destructive"
+          <SubmitButton
+            pendingLabel="Cerrando sesión…"
+            className="w-full rounded-full border border-destructive py-3 text-sm font-medium text-destructive"
           >
             Cerrar sesión
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </main>

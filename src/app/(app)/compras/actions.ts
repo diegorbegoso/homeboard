@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getActiveHousehold } from "@/lib/household";
 import { log } from "@/lib/log";
 import type { PushPayload } from "@/lib/push/send";
 import { buildItemPush, sendPushToHousehold } from "@/lib/push/send";
@@ -25,12 +26,8 @@ export async function addItem(input: unknown): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "no_autenticado" };
 
-  const { data: membership } = await supabase
-    .from("household_members")
-    .select("household_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!membership) return { ok: false, error: "sin_hogar" };
+  const { active: household } = await getActiveHousehold(supabase, user.id);
+  if (!household) return { ok: false, error: "sin_hogar" };
 
   const parsed = addItemSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "datos_invalidos" };
@@ -41,7 +38,7 @@ export async function addItem(input: unknown): Promise<ActionResult> {
       name: parsed.data.name,
       quantity: parsed.data.quantity ?? null,
       note: parsed.data.note ?? null,
-      household_id: membership.household_id,
+      household_id: household.id,
       created_by: user.id,
     },
     { onConflict: "id", ignoreDuplicates: true },
@@ -54,11 +51,7 @@ export async function addItem(input: unknown): Promise<ActionResult> {
     .eq("id", user.id)
     .maybeSingle()
     .then(({ data: profile }) => {
-      notify(
-        membership.household_id,
-        user.id,
-        buildItemPush("added", profile?.display_name ?? "Alguien", parsed.data.name),
-      );
+      notify(household.id, user.id, buildItemPush("added", profile?.display_name ?? "Alguien", parsed.data.name));
     });
 
   revalidatePath("/compras");
@@ -72,12 +65,8 @@ export async function updateItem(input: unknown): Promise<ActionResult<ShoppingI
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "no_autenticado" };
 
-  const { data: membership } = await supabase
-    .from("household_members")
-    .select("household_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!membership) return { ok: false, error: "sin_hogar" };
+  const { active: household } = await getActiveHousehold(supabase, user.id);
+  if (!household) return { ok: false, error: "sin_hogar" };
 
   const parsed = updateItemSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "datos_invalidos" };
@@ -86,6 +75,7 @@ export async function updateItem(input: unknown): Promise<ActionResult<ShoppingI
     .from("shopping_items")
     .update({ name: parsed.data.name, quantity: parsed.data.quantity ?? null, note: parsed.data.note ?? null })
     .eq("id", parsed.data.id)
+    .eq("household_id", household.id)
     .select(ITEM_SELECT)
     .maybeSingle();
   if (error) return { ok: false, error: "error_inesperado" };
@@ -102,12 +92,8 @@ export async function toggleItem(input: unknown): Promise<ActionResult<ShoppingI
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "no_autenticado" };
 
-  const { data: membership } = await supabase
-    .from("household_members")
-    .select("household_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!membership) return { ok: false, error: "sin_hogar" };
+  const { active: household } = await getActiveHousehold(supabase, user.id);
+  if (!household) return { ok: false, error: "sin_hogar" };
 
   const parsed = toggleItemSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "datos_invalidos" };
@@ -121,6 +107,7 @@ export async function toggleItem(input: unknown): Promise<ActionResult<ShoppingI
       done_at: isDone ? new Date().toISOString() : null,
     })
     .eq("id", id)
+    .eq("household_id", household.id)
     .is("deleted_at", null)
     .select(ITEM_SELECT)
     .maybeSingle();
@@ -134,7 +121,7 @@ export async function toggleItem(input: unknown): Promise<ActionResult<ShoppingI
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data: profile }) => {
-        notify(membership.household_id, user.id, buildItemPush("done", profile?.display_name ?? "Alguien", data.name));
+        notify(household.id, user.id, buildItemPush("done", profile?.display_name ?? "Alguien", data.name));
       });
   }
 

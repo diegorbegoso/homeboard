@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DesktopQr } from "@/components/desktop-qr";
+import { SubmitButton } from "@/components/submit-button";
 import { signUp } from "../actions";
 
 export const metadata: Metadata = { title: "Crea tu cuenta" };
@@ -60,9 +61,12 @@ export default async function RegistroPage({ searchParams }: { searchParams: Pro
             className="rounded-input border border-border bg-muted px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
         </div>
-        <button type="submit" className="rounded-full bg-primary py-3 text-sm font-medium text-on-primary">
+        <SubmitButton
+          pendingLabel="Creando tu cuenta…"
+          className="rounded-full bg-primary py-3 text-sm font-medium text-on-primary"
+        >
           Crear cuenta
-        </button>
+        </SubmitButton>
       </form>
       <p className="text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{" "}

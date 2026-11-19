@@ -1,4 +1,7 @@
+import { CaretRight } from "@phosphor-icons/react/ssr";
+import Link from "next/link";
 import { MicroAppTile } from "@/components/micro-app-tile";
+import { getActiveHousehold } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 import { enabledMicroApps } from "@/micro-apps/registry";
 
@@ -12,18 +15,24 @@ export default async function HomePage() {
     ? await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle()
     : { data: null };
 
-  const { data: membership } = user
-    ? await supabase.from("household_members").select("households(name)").eq("user_id", user.id).maybeSingle()
-    : { data: null };
-
-  const householdName = (membership?.households as { name: string } | null)?.name;
+  const { active, all } = user ? await getActiveHousehold(supabase, user.id) : { active: null, all: [] };
   const apps = enabledMicroApps();
 
   return (
     <main className="mx-auto flex max-w-sm flex-col gap-6 px-4 py-8">
       <div>
         <h1>Hola, {profile?.display_name}</h1>
-        {householdName && <p className="text-muted-foreground">{householdName}</p>}
+        {active && (
+          <Link
+            href="/hogares"
+            aria-label={`Hogar ${active.name}. ${all.length > 1 ? "Cambiar de hogar" : "Mis hogares"}`}
+            className="mt-1 inline-flex min-h-11 items-center gap-1 text-muted-foreground"
+          >
+            <span data-testid="hogar-activo">{active.name}</span>
+            <span className="text-sm font-medium text-primary">{all.length > 1 ? "· Cambiar" : "· Mis hogares"}</span>
+            <CaretRight size={16} aria-hidden="true" className="text-primary" />
+          </Link>
+        )}
       </div>
       <div className="grid grid-cols-1 gap-4">
         {apps.map((app) => (
