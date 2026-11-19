@@ -16,16 +16,21 @@ type OptimisticAction =
   | { type: "restore"; item: ShoppingItem }
   | { type: "update"; id: string; name: string; quantity: string | null; note: string | null };
 
+// The realtime echo of our own write can arrive before the Server Action resolves: never list an id twice.
+function upsertItem(state: ShoppingItem[], item: ShoppingItem): ShoppingItem[] {
+  return state.some((it) => it.id === item.id) ? state.map((it) => (it.id === item.id ? item : it)) : [...state, item];
+}
+
 function applyOptimistic(state: ShoppingItem[], action: OptimisticAction): ShoppingItem[] {
   switch (action.type) {
     case "add":
-      return [...state, action.item];
+      return upsertItem(state, action.item);
     case "toggle":
       return state.map((item) => (item.id === action.id ? { ...item, is_done: action.isDone } : item));
     case "delete":
       return state.filter((item) => item.id !== action.id);
     case "restore":
-      return [...state, action.item];
+      return upsertItem(state, action.item);
     case "update":
       return state.map((item) =>
         item.id === action.id ? { ...item, name: action.name, quantity: action.quantity, note: action.note } : item,
@@ -93,13 +98,15 @@ export function ShoppingList({ initialItems, householdId }: { initialItems: Shop
       deleted_at: null,
     };
     dispatch({ type: "add", item: optimisticItem });
-    await addItem({ id, name: parsed.data.name, quantity: parsed.data.quantity, note: null });
+    const result = await addItem({ id, name: parsed.data.name, quantity: parsed.data.quantity, note: null });
+    if (result.ok) setConfirmedItems((prev) => upsertItem(prev, optimisticItem));
   }
 
   function handleDelete(item: ShoppingItem) {
     startTransition(async () => {
       dispatch({ type: "delete", id: item.id });
-      await deleteItem({ id: item.id });
+      const result = await deleteItem({ id: item.id });
+      if (result.ok) setConfirmedItems((prev) => prev.filter((it) => it.id !== item.id));
     });
     toast(`Borraste ${item.name}`, {
       duration: 5000,
@@ -108,7 +115,8 @@ export function ShoppingList({ initialItems, householdId }: { initialItems: Shop
         onClick: () => {
           startTransition(async () => {
             dispatch({ type: "restore", item });
-            await restoreItem({ id: item.id });
+            const result = await restoreItem({ id: item.id });
+            if (result.ok) setConfirmedItems((prev) => upsertItem(prev, item));
           });
         },
       },
@@ -128,7 +136,15 @@ export function ShoppingList({ initialItems, householdId }: { initialItems: Shop
     if (!parsed.success) return;
     startTransition(async () => {
       dispatch({ type: "update", id: item.id, name: parsed.data.name, quantity: item.quantity, note: item.note });
-      await updateItem({ id: item.id, name: parsed.data.name, quantity: item.quantity, note: item.note });
+      const result = await updateItem({
+        id: item.id,
+        name: parsed.data.name,
+        quantity: item.quantity,
+        note: item.note,
+      });
+      if (result.ok) {
+        setConfirmedItems((prev) => prev.map((it) => (it.id === item.id ? { ...it, name: parsed.data.name } : it)));
+      }
     });
   }
 
