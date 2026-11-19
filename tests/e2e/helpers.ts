@@ -43,7 +43,7 @@ export async function createHousehold(page: Page, name: string): Promise<void> {
 
 export async function readInviteCode(page: Page): Promise<string> {
   await page.goto("/ajustes");
-  const code = (await page.getByTestId("codigo-invitacion").innerText()).trim();
+  const code = ((await page.getByTestId("codigo-invitacion").textContent()) ?? "").trim();
   expect(code).toMatch(/^[A-Z2-9]{8}$/);
   return code;
 }
